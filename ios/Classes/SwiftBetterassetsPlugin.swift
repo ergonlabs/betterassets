@@ -23,6 +23,15 @@ public class SwiftBetterassetsPlugin: NSObject, FlutterPlugin {
     var streams : Dictionary<String, FileHandle> = [:]
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         let args = call.arguments as? Dictionary<String, Any>
+
+        let bundle: Bundle
+        if let delegate = UIApplication.shared.delegate  {
+          let c = type(of: delegate)
+          bundle = Bundle(for: c)
+        } else {
+          bundle = Bundle.main
+        }
+
         if call.method.starts(with: "stream.") {
             if let key = args?["key"] as? String,
                let fd = streams[key] {
@@ -54,21 +63,21 @@ public class SwiftBetterassetsPlugin: NSObject, FlutterPlugin {
 
         }
 
-        var path = registrar.lookupKey(forAsset: "bark.dog")
+        var path = registrar.lookupKey(forAsset: "")
         if let subPath = args?["path"] as? String {
-            path = path + "/" + subPath
+            path = path + subPath
         }
 
         switch call.method {
         case "list":
-            if let realPath = Bundle.main.path(forResource: path, ofType: nil),
+            if let realPath = bundle.path(forResource: path, ofType: nil),
                 let contents = try? FileManager.default.contentsOfDirectory(atPath: realPath).map {path in path} {
-            result(contents)
+              result(contents)
             } else {
                 result([]);
             }
         case "open":
-            if let realPath = Bundle.main.path(forResource: path, ofType: nil),
+            if let realPath = bundle.path(forResource: path, ofType: nil),
                 let fd = FileHandle(forReadingAtPath: realPath) {
                 let key = UUID().uuidString
                 streams[key] = fd
